@@ -40,7 +40,7 @@ DB_HOST=db
 DB_PORT=5432
 DB_NAME=comments
 DB_USER=postgres
-DB_PASSWORD=Kishan8051
+DB_PASSWORD=your_pass
 
 # Facebook (leave as placeholders for local testing)
 FB_APP_ID=YOUR_APP_ID
