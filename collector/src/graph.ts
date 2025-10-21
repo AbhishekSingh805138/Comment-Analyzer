@@ -1,4 +1,5 @@
 import axios from 'axios';
+import 'dotenv/config';
 import type { GraphComment } from './types.js';
 
 const BASE = 'https://graph.facebook.com/v18.0';

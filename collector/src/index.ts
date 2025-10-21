@@ -10,22 +10,9 @@ function hash(s?: string) {
 }
 
 async function runOnce() {
-  for (const postId of POSTS) {
-    await upsertPost(postId);
-    const comments = await fetchComments(postId);
-    for (const c of comments) {
-      const text = (c.message || '').trim();
-      if (!text) continue;
-      await insertComment({
-        id: c.id,
-        post_id: postId,
-        text,
-        like_count: c.like_count || 0,
-        created_time: c.created_time,
-        commenter_hash: hash(c.from?.id),
-      });
-    }
-  }
+  console.log('Collector running in local mode - no Facebook API calls');
+  // In local mode, we skip Facebook API calls
+  // Test data should be inserted manually via SQL
 }
 
 // simple interval loop (every 5 minutes)

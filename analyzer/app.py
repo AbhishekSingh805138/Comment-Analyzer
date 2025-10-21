@@ -5,7 +5,7 @@ from datetime import datetime
 from unidecode import unidecode
 import emoji
 from langdetect import detect
-from model_bootstrap import load_pipelines, STANCE_LABELS
+from model_bootstrap_light import load_pipelines, STANCE_LABELS
 
 DB_DSN = f"host={os.getenv('DB_HOST')} port={os.getenv('DB_PORT','5432')} dbname={os.getenv('DB_NAME')} user={os.getenv('DB_USER')} password={os.getenv('DB_PASSWORD')}"
 BATCH = int(os.getenv('ANALYZER_BATCH_SIZE', '100'))
@@ -26,8 +26,9 @@ async def normalize(txt: str) -> str:
     return unidecode(t) if lang != "hi" else t
 
 async def resolve_candidate_map(conn):
-    rows = await conn.execute("SELECT id, name, aliases FROM candidates")
-    rows = await rows.fetchall()
+    cur = conn.cursor()
+    await cur.execute("SELECT id, name, aliases FROM candidates")
+    rows = await cur.fetchall()
     mapping = []
     for r in rows:
         mapping.append((r[0], r[1], [a.lower() for a in (r[2] or [])]))
@@ -46,8 +47,9 @@ async def analyze_batch():
             WHERE analyzed = FALSE
             ORDER BY created_time ASC
             LIMIT %s
-        "
-        cur = await conn.execute(q, (BATCH,))
+        """
+        cur = conn.cursor()
+        await cur.execute(q, (BATCH,))
         rows = await cur.fetchall()
         if not rows:
             return {"processed": 0}
@@ -83,25 +85,29 @@ async def analyze_batch():
 
         async with conn.transaction():
             if inserts:
-                await conn.executemany(
+                cur = conn.cursor()
+                await cur.executemany(
                     """
                     INSERT INTO analysis_results (comment_id, candidate_id, stance, sentiment, score)
                     VALUES (%s,%s,%s,%s,%s)
                     ON CONFLICT DO NOTHING
-                    ",
+                    """,
                     inserts
                 )
             if to_mark:
-                await conn.executemany("UPDATE comments_raw SET analyzed = TRUE WHERE id = %s", [(i,) for i in to_mark])
+                cur = conn.cursor()
+                await cur.executemany("UPDATE comments_raw SET analyzed = TRUE WHERE id = %s", [(i,) for i in to_mark])
 
         return {"processed": len(to_mark), "stored": len(inserts)}
 
 @app.get("/summary")
 async def summary():
     async with await psycopg.AsyncConnection.connect(DB_DSN) as conn:
-        cur1 = await conn.execute("SELECT candidate, stance, count FROM v_support_counts")
+        cur1 = conn.cursor()
+        await cur1.execute("SELECT candidate, stance, count FROM v_support_counts")
         sup = await cur1.fetchall()
-        cur2 = await conn.execute("SELECT candidate, sentiment, count FROM v_sentiment_counts")
+        cur2 = conn.cursor()
+        await cur2.execute("SELECT candidate, sentiment, count FROM v_sentiment_counts")
         sen = await cur2.fetchall()
         return {
             "support": [{"candidate": r[0], "stance": r[1], "count": int(r[2])} for r in sup],

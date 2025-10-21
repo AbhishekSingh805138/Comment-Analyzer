@@ -1,4 +1,7 @@
 import { Pool } from 'pg';
+import 'dotenv/config';
+/// <reference types="node" />
+import * as process from 'process';
 export const pool = new Pool({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT || 5432),

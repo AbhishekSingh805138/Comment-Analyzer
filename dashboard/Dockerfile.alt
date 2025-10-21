@@ -1,0 +1,16 @@
+# Alternative dashboard Dockerfile
+FROM node:20-slim
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm install --silent
+
+# Copy source
+COPY . .
+
+# Runtime env
+ENV NEXT_PUBLIC_ANALYZER_URL=http://analyzer:8000/summary
+
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
