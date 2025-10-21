@@ -1,6 +1,7 @@
 import os, re, json
 import psycopg
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from unidecode import unidecode
 import emoji
@@ -11,6 +12,16 @@ DB_DSN = f"host={os.getenv('DB_HOST')} port={os.getenv('DB_PORT','5432')} dbname
 BATCH = int(os.getenv('ANALYZER_BATCH_SIZE', '100'))
 
 app = FastAPI(title="Comment Analyzer")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
 stance_pipe, sentiment_pipe = load_pipelines()
 
 async def normalize(txt: str) -> str:
